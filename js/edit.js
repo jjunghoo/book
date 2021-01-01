@@ -10,43 +10,23 @@ async function getUserByToken(token) {
       },
     });
     return res.data;
-  } catch (error) {
+  } catch(error) {
     console.log('getUserByToken error', error);
     return null;
   }
-}
-
-async function logout() {
-  const token = getToken();
-  if (token === null) {
-    location = '/login';
-    return;
-  }
-  try {
-    await axios.delete('https://api.marktube.tv/v1/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  } catch (error) {
-    console.log('logout error', error);
-  } finally {
-    localStorage.clear();
-    window.location.href = '/login';
-  }
-}
+};
 
 async function getBook(bookId) {
   const token = getToken();
-  if (token === null) {
-    location.href = '/login';
+  if (token == null) {
+    location.assign('/login');
     return null;
   }
   try {
     const res = await axios.get(`https://api.marktube.tv/v1/book/${bookId}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     });
     return res.data;
   } catch (error) {
@@ -66,35 +46,26 @@ async function updateBook(bookId) {
   const author = authorElement.value;
   const url = urlElement.value;
 
-  if (title === '' || message === '' || author === '' || url === '') {
+  if (title == '' || message == '' || author == '' || url == '') {
     return;
   }
 
   const token = getToken();
-  if (token === null) {
-    location = '/login';
+  if (token == null) {
+    location.assign('/login');
     return;
   }
 
-  await axios.patch(
-    `https://api.marktube.tv/v1/book/${bookId}`,
-    {
-      title,
-      message,
-      author,
-      url,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  );
-}
-
-function bindLogoutButton() {
-  const btnLogout = document.querySelector('#btn_logout');
-  btnLogout.addEventListener('click', logout);
+  await axios.patch(`https://api.marktube.tv/v1/book/${bookId}`, {
+    title,
+    message,
+    author,
+    url
+  }, {
+    headers: {
+      Authorization: `Bearer ${token}` 
+    }
+  });
 }
 
 function render(book) {
@@ -111,15 +82,15 @@ function render(book) {
   urlElement.value = book.url;
 
   const form = document.querySelector('#form-edit-book');
-  form.addEventListener('click', async event => {
+  form.addEventListener('submit', async event => {
     event.preventDefault();
     event.stopPropagation();
     event.target.classList.add('was-validated');
 
     try {
       await updateBook(book.bookId);
-      location.href = `book?id=${book.bookId}`;
-    } catch (error) {
+      location.assign(`book?id=${book.bookId}`);
+    } catch(error) {
       console.log(error);
     }
   });
@@ -129,37 +100,39 @@ function render(book) {
     event.preventDefault();
     event.stopPropagation();
 
-    location.href = `book?id=${book.bookId}`;
-  });
+    location.assign(`book?id=${book.bookId}`);
+  })
 }
 
 async function main() {
-  // 브라우저에서 id 가져오기
+  //브라우저에서 id 가져오기
   const bookId = new URL(location.href).searchParams.get('id');
-
+  
   // 토큰 체크
   const token = getToken();
-  if (token === null) {
+  if (token == null) {
+    location.href = '/login';
+    return;
+  }
+  
+  //토큰으로 서버에서 나의 정보 받아오기
+  const user = await getUserByToken(token);
+  if (user == null) {
+    localStorage.clear();
     location.href = '/login';
     return;
   }
 
-  // 토큰으로 서버에서 나의 정보 받아오기
-  const user = await getUserByToken(token);
-  if (user === null) {
-    localStorage.clear();
-    location = '/login';
-    return;
-  }
-
-  // 책을 서버에서 받아오기
+  //책을 서버에서 받아오기
   const book = await getBook(bookId);
-  if (book === null) {
+  if (book == null) {
     alert('서버에서 책 가져오기 실패');
     return;
   }
 
-  // 받아온 책을 그리기
+  console.log(book);
+
+  //받아온 책을 그리기
   render(book);
 }
 

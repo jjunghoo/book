@@ -6,19 +6,21 @@ async function getUserByToken(token) {
   try {
     const res = await axios.get('https://api.marktube.tv/v1/me', {
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     });
     return res.data;
-  } catch (error) {
+  } catch(error) {
     console.log('getUserByToken error', error);
     return null;
   }
 }
 
 async function save(event) {
-  event.preventDefault();
-  event.stopPropagation();
+  event.preventDefault(); //form 행동후 정지시키는 함수
+  event.stopPropagation();// form 상위 DOM에 전달해주는걸 방지
+  console.log('save');
+
   event.target.classList.add('was-validated');
 
   const titleElement = document.querySelector('#title');
@@ -31,33 +33,30 @@ async function save(event) {
   const author = authorElement.value;
   const url = urlElement.value;
 
-  if (title === '' || message === '' || author === '' || url === '') {
+  if (title == '' || message == '' || author == '' || url == '') {
     return;
   }
+  
 
   const token = getToken();
-  if (token === null) {
-    location.href = '/login';
+  if (token == null) {
+    location.assign('/login');
     return;
   }
 
   try {
-    await axios.post(
-      'https://api.marktube.tv/v1/book',
-      {
-        title,
-        message,
-        author,
-        url,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    location.href = '/';
-  } catch (error) {
+    await axios.post('https://api.marktube.tv/v1/book', {
+      title,
+      message,
+      author,
+      url
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
+    location.assign('/');
+  } catch(error) {
     console.log('save error', error);
     alert('책 추가 실패');
   }
@@ -69,23 +68,25 @@ function bindSaveButton() {
 }
 
 async function main() {
-  // 버튼에 이벤트 연결
+  //버튼에 이벤트 연결
   bindSaveButton();
 
-  // 토큰 체크
+  //토큰 체크
   const token = getToken();
-  if (token === null) {
-    location.href = '/login';
+  if (token == null) {
+    location.assign('/login');
+    return;
+  }
+  //토큰으로 서버에서 나의 정보 받아오기
+  const user = await getUserByToken(token);
+  if (user == null) {
+    localStorage.clear();
+    location.assign('/login');
     return;
   }
 
-  // 토큰으로 서버에서 나의 정보 받아오기
-  const user = await getUserByToken(token);
-  if (user === null) {
-    localStorage.clear();
-    location.href = '/login';
-    return;
-  }
+  console.log(user);
 }
+
 
 document.addEventListener('DOMContentLoaded', main);
